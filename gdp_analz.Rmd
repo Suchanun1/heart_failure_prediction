@@ -1,0 +1,87 @@
+---
+title: "GDP"
+author: "Suchanun Oupkaew"
+date: "2025-06-06"
+output: pdf_document
+---
+
+```{r}
+library('astsa')
+library("forecast")
+```
+
+```{r}
+load("/Users/cream/Downloads/finalproject.Rdata")
+tail(finalPro_data)
+```
+### Data Selection
+```{r}
+gdp = finalPro_data$GDP
+```
+
+
+```{r}
+acf(gdp, lag.max = 30, na.action = na.pass)
+pacf(gdp, lag.max = 30, na.action = na.pass)
+ts.plot(gdp)
+```
+
+### log
+```{r}
+log.gdp = log(gdp)
+ts.plot(log.gdp)
+acf(log.gdp, lag.max = 30, na.action = na.pass)
+pacf(log.gdp, lag.max = 30, na.action = na.pass)
+```
+
+```{r}
+## log diff
+log.gdp = ts(log.gdp)
+log.diff.gdp = diff(log.gdp, differences = 2)
+
+ts.plot(log.diff.gdp)
+acf(log.diff.gdp, lag.max = 30, na.action = na.pass)
+pacf(log.diff.gdp, lag.max = 30, na.action = na.pass)
+``` 
+- this seems to suggest MA(1) or MA(2) for GDP
+#### MA(1) with drift = 1
+```{r}
+log.gdp.ma11 = arima(log.gdp, order = c(0, 1, 1))
+arima011 = sarima(log(finalPro_data$GDP), 0, 1, 1)
+AIC(log.gdp.ma11)
+Box.test(residuals(log.gdp.ma11 ), lag = 20, type = "Ljung-Box") ## res behave like white noise
+```
+
+#### MA(1) with drift = 2
+```{r}
+log.gdp.ma21 = arima(log.gdp, order = c(0, 2, 1))
+arima021 = sarima(log(finalPro_data$GDP), 0, 2, 1)
+AIC(log.gdp.ma21)
+arima021
+Box.test(residuals(log.gdp.ma21 ), lag = 20, type = "Ljung-Box") ## res behave like white noise
+```
+
+arima021: -62.17981
+arima022: -60.23
+
+#### MA(2) with drift = 2
+```{r}
+log.gdp.ma22 = arima(log.gdp, order = c(0, 2, 2))
+arima022 = sarima(log(finalPro_data$GDP), 0, 2, 2)
+AIC(log.gdp.ma22)
+Box.test(residuals(log.gdp.ma22 ), lag = 20, type = "Ljung-Box") ## res behave like white noise
+```
+
+
+### Forecast for GDP
+```{r}
+library(forecast)
+```
+
+```{r}
+forecast(log.gdp.ma21,level=c(80,95))
+autoplot(forecast(log.gdp.ma21))
+```
+
+
+

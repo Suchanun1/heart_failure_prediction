@@ -1,0 +1,99 @@
+---
+title: "Imports"
+author: "Suchanun Oupkaew"
+date: "2025-06-08"
+output: pdf_document
+---
+
+```{r}
+library('astsa')
+library('dplyr')
+```
+
+```{r}
+load("/Users/cream/Downloads/finalproject.Rdata")
+head(finalPro_data)
+```
+
+```{r}
+imports = finalPro_data$Imports
+acf(imports,lag.max =  30, na.action = na.pass)
+pacf(imports,lag.max =  30, na.action = na.pass)
+ts.plot(imports)
+```
+
+
+### log imports
+```{r}
+log.imports = log(imports)
+acf(log.imports, lag.max = 30, na.action = na.pass)
+pacf(log.imports, lag.max = 30, na.action = na.pass)
+ts.plot(log.imports)
+```
+
+#### log diff
+```{r}
+log.imports = ts(log.imports)
+log.diff.imp = diff(log.imports, differences = 1)
+acf(log.diff.imp, lag.max = 30, na.action = na.pass)
+pacf(log.diff.imp, lag.max = 30, na.action = na.pass)
+ts.plot(log.diff.imp)
+```
+- try: arma(1,1) and arma(1, 2) and arma(2,1)
+
+
+#### arma(2,1)
+```{r}
+log.imp.arma21 = arima(log.imports, order = c(2, 1, 1))
+sarima(log(finalPro_data$Imports), 2, 1, 1)
+print(AIC(log.imp.arma21))
+ts.plot(residuals(log.imp.arma21))
+Box.test(residuals(log.imp.arma21), lag = 20, type = "Ljung-Box") ## res behave like white noise
+
+```
+
+
+#### arma(1,2)
+```{r}
+log.imp.arma12 = arima(log.imports, order = c(1, 1, 2))
+sarima(log(finalPro_data$Imports), 1, 1, 2)
+print(AIC(log.imp.arma12))
+Box.test(residuals(log.imp.arma12 ), lag = 20, type = "Ljung-Box") ## res behave like white noise
+```
+
+
+
+#### ma(1)
+```{r}
+log.imp.ma1 = arima(log.imports, order = c(0, 1, 1))
+sarima(log(finalPro_data$Imports), 0, 1, 1)
+AIC(log.imp.ma1)
+Box.test(residuals(log.imp.ma1), lag = 20, type = "Ljung-Box") ## res behave like white noise
+```
+
+
+#### ma(2)
+```{r}
+log.imp.ma2 = arima(log.imports, order = c(0, 1, 2))
+sarima(log(finalPro_data$Imports), 0, 1, 2)
+AIC(log.imp.ma2)
+Box.test(residuals(log.imp.ma2), lag = 20, type = "Ljung-Box") ## res behave like white noise
+```
+
+arima(1,1,0): -78
+arima(0,1,2) : -83.02682
+arima(2, 1, 2): -80.15922
+
+### Forecast
+```{r}
+library(forecast)
+```
+
+```{r}
+forecast(log.imp.ma2,level=c(80,95))
+autoplot(forecast(log.imp.ma2))
+```
+
+
+
+
